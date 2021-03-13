@@ -1,0 +1,22 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t shryho/react-test -f ./client/Dockerfile.dev .
+
+script:
+    - docker run -e CI=true USERNAME/react-test npm test
+
+after_success:
+    - docker build -t shryho/multi-react ./client .
+    - docker build -t shryho/multi-nginx ./nginx .
+    - docker build -t shryho/multi-server ./server .
+    - docker build -t shryho/multi-worker ./worker .
+    # Login docker
+    - echo "$DOCKER_PASS" | docker login -u "$DOCKER_ID" --password-stdin
+    # Take images and push to docker hub
+    - docker push shryho/multi-react
+    - docker push shryho/multi-nginx
+    - docker push shryho/multi-server
+    - docker push shryho/multi-worker
